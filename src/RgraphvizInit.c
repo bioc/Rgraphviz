@@ -13,10 +13,6 @@ static const R_CallMethodDef R_CallDef[] = {
     {"Rgraphviz_graphvizVersion", (DL_FUNC)&Rgraphviz_graphvizVersion, 0},
     {"setDefaultAttrs", (DL_FUNC)&setDefaultAttrs, 1},
     {"Rgraphviz_getAttr", (DL_FUNC)&Rgraphviz_getAttr, 2},
-    {"assignAttrs", (DL_FUNC)&assignAttrs,3},
-    {"Rgraphviz_bezier", (DL_FUNC)&Rgraphviz_bezier, 3},
-    {"Rgraphviz_buildNodeList", (DL_FUNC)&Rgraphviz_buildNodeList, 4},
-    {"Rgraphviz_buildEdgeList", (DL_FUNC)&Rgraphviz_buildEdgeList, 7},
     {NULL, NULL, 0},
 };
 

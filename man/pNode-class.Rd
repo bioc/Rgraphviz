@@ -43,7 +43,5 @@ Objects can be created by calls of the form \code{new("pNode", ...)}.
 
    z <- buildNodeList(g1)
    z[[1]]   ## Object of type pNode
-
-   name(z[[1]])
 }
 \keyword{classes}

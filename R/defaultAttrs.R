@@ -37,19 +37,7 @@ getDefaultAttrs <- function(curAttrs=list(),
         curAttrs$graph$overlap <- ""
     if (is.null(curAttrs$graph$splines))
         curAttrs$graph$splines <- TRUE
-    if (is.null(curAttrs$graph$rank))
-        curAttrs$graph$rank <- "same"
 
-    ## Use the 'fin' value for the Graphviz size, if there's no
-    ## plot device open right now, then use a sensible default
-    ## instead of letting Graphviz choose whatever it wants.  This
-    ## helps prevent visual distortion when scaling down the image.
-    if ((.Device != "null device")&&(is.null(curAttrs$graph$size))) {
-        fin <- par("fin")
-        curAttrs$graph$size <- paste(fin[1],fin[2],sep=",")
-    }
-    else
-        curAttrs$graph$size <- "6.99,6.99"
 
 
     ## Now do layout specific graph attributes
@@ -63,8 +51,6 @@ getDefaultAttrs <- function(curAttrs=list(),
         curAttrs$cluster$bgcolor <- bg
     if (is.null(curAttrs$cluster$color))
         curAttrs$cluster$color <- col
-    if (is.null(curAttrs$cluster$rank))
-        curAttrs$cluster$rank <- "same"
 
     ## node attributes
     if (is.null(curAttrs$node$shape))
@@ -85,8 +71,8 @@ getDefaultAttrs <- function(curAttrs=list(),
 #        curAttrs$node$style <- "solid"
 #    if (is.null(curAttrs$node$distortion))
 #        curAttrs$node$distortion <- "0.0"
-    if (is.null(curAttrs$node$height))
-        curAttrs$node$height <- "0.5"
+#    if (is.null(curAttrs$node$height))
+#        curAttrs$node$height <- "0.5"
 #    if (is.null(curAttrs$node$layer))
 #        curAttrs$node$layer <- ""
 #    if (is.null(curAttrs$node$regular))
@@ -95,8 +81,8 @@ getDefaultAttrs <- function(curAttrs=list(),
 #        curAttrs$node$sides <- "4"
 #    if (is.null(curAttrs$node$skew))
 #        curAttrs$node$skew <- "0.0"
-    if (is.null(curAttrs$node$width))
-        curAttrs$node$width <- "0.75"
+#    if (is.null(curAttrs$node$width))
+#        curAttrs$node$width <- "0.75"
 
 
     ## edge attrs
@@ -131,8 +117,8 @@ getDefaultAttrs <- function(curAttrs=list(),
 #        if (is.null(curAttrs$edge$constraint))
 #            curAttrs$edge$constraint <- FALSE
 
-        if (is.null(curAttrs$edge$minlen))
-            curAttrs$edge$minlen <- "1"
+#        if (is.null(curAttrs$edge$minlen))
+#            curAttrs$edge$minlen <- "1"
     }
 
     if (layoutType == "neato")

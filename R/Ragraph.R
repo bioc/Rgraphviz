@@ -54,22 +54,16 @@ if (is.null(getGeneric("AgNode")))
 setMethod("AgNode", "Ragraph", function(object)
           object@AgNode)
 
-if (is.null(getGeneric("getNodeXY")))
-    setGeneric("getNodeXY", function(object)
-               standardGeneric("getNodeXY"))
+getNodeLocs <- function(object) {
+    if (! is(object, "Ragraph"))
+        stop("need a Ragraph object")
 
-setMethod("getNodeXY", "Ragraph",  function(object) {
     out <- vector(mode="list",length=2)
     names(out) <- c("x","y")
     xys <- lapply(object@AgNode,getNodeCenter)
     out[[1]] <- unlist(lapply(xys,getX))
     out[[2]] <- unlist(lapply(xys,getY))
     out
-})
-
-getNodeLocs <- function(object) {
-    .Deprecated("getNodeXY")
-    getNodeXY(object)
 }
 
 getNodeNames <- function(object) {
@@ -81,7 +75,7 @@ getNodeNames <- function(object) {
 getNodeLabels <- function(object) {
     if (!is(object, "Ragraph"))
         stop("Need a Ragraph object")
-    unlist(lapply(object@AgNode, function(x) labelText(x@txtLabel)))
+    unlist(lapply(object@AgNode, label))
 }
 
 ### Class boundingBox
@@ -156,10 +150,6 @@ if (is.null(getGeneric("getNodeHeight")))
                standardGeneric("getNodeHeight"))
 setMethod("getNodeHeight", "AgNode", function(object)
           object@height)
-setMethod("getNodeHeight", "Ragraph", function(object) {
-      nodes = object@AgNode
-      sapply(nodes, getNodeHeight)
-   })
 
 if (is.null(getGeneric("getNodeRW")))
     setGeneric("getNodeRW", function(object)
@@ -167,40 +157,23 @@ if (is.null(getGeneric("getNodeRW")))
 setMethod("getNodeRW", "AgNode", function(object)
           object@rWidth)
 
-setMethod("getNodeRW", "Ragraph", function(object) {
-      nodes = object@AgNode
-      sapply(nodes, getNodeRW)
-   })
-
 if (is.null(getGeneric("getNodeLW")))
     setGeneric("getNodeLW", function(object)
                standardGeneric("getNodeLW"))
 setMethod("getNodeLW", "AgNode", function(object)
           object@lWidth)
 
-setMethod("getNodeLW", "Ragraph", function(object) {
-      nodes = object@AgNode
-      sapply(nodes, getNodeLW)
-   })
-
-
 if (is.null(getGeneric("name")))
     setGeneric("name", function(object)
                standardGeneric("name"))
 setMethod("name", "AgNode", function(object)
           object@name)
-
 if (is.null(getGeneric("txtLabel")))
     setGeneric("txtLabel", function(object)
                standardGeneric("txtLabel"))
 setMethod("txtLabel", "AgNode", function(object)
           object@txtLabel)
 
-setMethod("getNodeXY", "AgNode", function(object) {
-    cen <- getNodeCenter(object)
-    out <- list(x=getX(cen), y=getY(cen))
-    out
-})
 
 ### Class AgEdge
 
@@ -321,12 +294,12 @@ setMethod("bezierPoints", "BezierCurve", function(object) {
     z <- pointList(object)
     out <- vector("list", length=11)
     for (i in 0:10)
-        out[[i+1]] <- .Call("Rgraphviz_bezier", z, length(z), i/10,
-                            PACKAGE="Rgraphviz")
+        out[[i+1]] <- bezier(z, length(z), i/10)
     out <- matrix(unlist(out), ncol=2, byrow=TRUE,
                   dimnames=list(NULL,c("x","y")))
     out
 })
+
     if (is.null(getGeneric("bLines")))
         setGeneric("bLines", function(x, ...)
                    standardGeneric("bLines"))
@@ -354,6 +327,9 @@ setMethod("bLines", "BezierCurve", function(x,...,col=par("col"),
 
     headStart <- z[numSegs-1,]
     headEnd <- z[numSegs,]
+
+##    if ((headStart[1] == headEnd[1])&&(headStart[2] == headEnd[2]))
+##        print("uh oh")
 
     switch(arrowhead,
            "none"=lines(c(headStart[1], headEnd[1]),
@@ -441,8 +417,7 @@ setMethod("labelFontsize", "AgTextLabel", function(object)
     })
 
     setMethod("show", "xyPoint", function(object)
-             cat(paste("x: ", object@x, ", y: ",
-                          object@y, "\n", sep="")))
+              print(paste(object@x,object@y,sep=",")))
 
     setMethod("show", "AgEdge", function(object) {
         z <- splines(object)
@@ -475,44 +450,57 @@ setMethod("labelFontsize", "AgTextLabel", function(object)
     })
 
     setMethod("lines","AgEdge",
-              function(x,..., len=0.25,lty=par("lty"),
-                       lwd=par("lwd"), edgemode="undirected",
-                       attrs=list()) {
-                  edgeName <- paste(tail(x),head(x),sep="~")
-                  attrNames <- names(attrs)
+          function(x,..., len=0.25,lty=par("lty"),
+                   lwd=par("lwd"), edgemode="undirected",
+                   attrs=list()) {
+              edgeName <- paste(tail(x),head(x),sep="~")
+              attrNames <- names(attrs)
 
-                  z <- splines(x)
+              z <- splines(x)
 
-                  arrowtails <- rep("none", length(z))
-                  if (("arrowtail" %in% attrNames)&&
-                      (edgeName %in% names(attrs$arrowtail)))
-                      arrowtails[1] <- as.character(attrs$arrowtail[edgeName])
-                  else
-                      arrowtails[1] <- arrowtail(x)
+              arrowtails <- rep("none", length(z))
+              if (("arrowtail" %in% attrNames)&&
+                  (edgeName %in% names(attrs$arrowtail)))
+                  arrowtails[1] <- as.character(attrs$arrowtail[edgeName])
+              else
+                  arrowtails[1] <- arrowtail(x)
 
-                  arrowheads <- rep("none", length(z))
-                  if (("arrowhead" %in% attrNames)&&
-                      (edgeName %in% names(attrs$arrowhead)))
-                      arrowheads[length(z)] <- as.character(attrs$arrowhead[edgeName])
-                  else
-                      arrowheads[length(z)] <- arrowhead(x)
+              arrowheads <- rep("none", length(z))
+              if (("arrowhead" %in% attrNames)&&
+                  (edgeName %in% names(attrs$arrowhead)))
+                  arrowheads[length(z)] <- as.character(attrs$arrowhead[edgeName])
+              else
+                  arrowheads[length(z)] <- arrowhead(x)
 
-                  if (("color" %in% attrNames)&&
-                      (edgeName %in% names(attrs$color)))
-                      edgeColor <- as.character(attrs$color[edgeName])
-                  else
-                      edgeColor <- color(x)
+              if (("color" %in% attrNames)&&
+                  (edgeName %in% names(attrs$color)))
+                  edgeColor <- as.character(attrs$color[edgeName])
+              else
+                  edgeColor <- color(x)
 
-                  ## Adjust arrowhead size according to attr
-                  len <- len * as.numeric(arrowsize(x))
+              ## Adjust arrowhead size according to attr
+              len <- len * as.numeric(arrowsize(x))
 
-                  mapply(bLines, z, arrowhead=arrowheads, arrowtail=arrowtails,
-                         MoreArgs=list(len=len, col=edgeColor,
-                         lty=lty, lwd=lwd, ...))
+              mapply(bLines, z, arrowhead=arrowheads, arrowtail=arrowtails,
+                     MoreArgs=list(len=len, col=edgeColor,
+                     lty=lty, lwd=lwd, ...))
 
-                  drawTxtLabel(txtLabel(x), objName=edgeName, objAttrs=attrs)
+              drawTxtLabel(txtLabel(x), objName=edgeName, objAttrs=attrs)
 
-                  return(NULL)
-              })
+              return(NULL)
+          })
+
 }
+
+
+bezier <- function(pnts, n, t) {
+    ## Used for calculation of bezier splines
+    n <- n-1
+    x <- 0
+    for (k in 0:n) {
+        x <- x + (pnts[[k+1]] * choose(n,k) * (t^k) * ((1-t)^(n-k)))
+    }
+    return(x)
+}
+
 

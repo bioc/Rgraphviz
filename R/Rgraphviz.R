@@ -1,11 +1,11 @@
 agopen <- function(graph,  name, nodes, edges, kind=NULL,
-                   layout=TRUE, layoutType=c("dot","neato","twopi"),
+                   layout=TRUE, layoutType=c("dot","neato","twopi")[1],
                    attrs=list(),
                    nodeAttrs=list(), edgeAttrs=list(),
                    subGList=list(), edgeMode=edgemode(graph),
                    recipEdges=c("combined", "distinct")) {
 
-    layoutType <- match.arg(layoutType)
+
     recipEdges <- match.arg(recipEdges)
     attrs <- getDefaultAttrs(attrs, layoutType)
     checkAttrs(attrs)
@@ -16,14 +16,19 @@ agopen <- function(graph,  name, nodes, edges, kind=NULL,
     if (missing(nodes)) {
         if (missing(graph))
             stop("Must supply either parameter 'graph' or 'nodes'")
-        nodes <- buildNodeList(graph, nodeAttrs, subGList, attrs$node)
+        nodes <- buildNodeList(graph, nodeAttrs, subGList)
     }
     if (missing(edges)) {
         if (missing(graph))
             stop("Must supply either parameter 'graph' or 'edges'")
-        edges <- buildEdgeList(graph, recipEdges, edgeAttrs,  subGList,
-                               attrs$edge)
+        edges <- buildEdgeList(graph, edgeAttrs, subGList,
+                               recipEdges=recipEdges)
     }
+
+    if (length(subGList) > 0)
+        subGs <- paste("cluster_",1:length(subGList), sep="")
+    else
+        subGs <- character()
 
     if (is.null(kind)) {
         ## Determine kind from the graph object
@@ -42,10 +47,15 @@ agopen <- function(graph,  name, nodes, edges, kind=NULL,
                        stop(paste("Incorrect kind parameter:",kind)))
     }
 
+    ## all attrs must be character strings going into C,
+    ## graphviz wants all attrs to be char*
+    ## FIXME: so shouldn't we do that in C?
+    attrs <- lapply(attrs, function(x){lapply(x,as.character)})
+
     g <- .Call("Rgraphviz_agopen", as.character(name),
                as.integer(outK), as.list(nodes),
                as.list(edges), as.list(attrs),
-               as.list(subGList), PACKAGE="Rgraphviz")
+               as.character(subGs), PACKAGE="Rgraphviz")
     g@layoutType <- layoutType
     g@edgemode <- edgeMode
 
@@ -80,9 +90,9 @@ agwrite <- function(graph, filename) {
 }
 
 layoutGraph <- function(graph) {
-    if (is(graph,"graphNEL"))
+    if (inherits(graph,"graphNEL"))
         stop("Please use function agopen() for graphNEL objects")
-    if (!is(graph,"Ragraph"))
+    if (!inherits(graph,"Ragraph"))
         stop("Object is not of class Ragraph")
 
     type <- switch(layoutType(graph),
@@ -102,112 +112,130 @@ layoutGraph <- function(graph) {
     }
 }
 
+
 graphvizVersion <- function() {
     z <- .Call("Rgraphviz_graphvizVersion", PACKAGE="Rgraphviz")
     z
 }
 
-buildNodeList <- function(graph, nodeAttrs=list(), subGList=list(),
-                          defAttrs=list()) {
-    .Call("Rgraphviz_buildNodeList", nodes(graph), nodeAttrs,
-                          subGList, defAttrs, PACKAGE="Rgraphviz")
+buildNodeList <- function(graph, nodeAttrs=list(), subGList=list()) {
+    pNodes <- list()
+
+    nodeNames <- nodes(graph)
+
+    if (length(nodeNames) > 0) {
+        pNodes <- lapply(nodeNames, function(x) {
+            new("pNode",name=x, attrs=list(label=x))})
+        names(pNodes) <- nodeNames
+
+        attrNames <- names(nodeAttrs)
+        for (i in 1:length(nodeNames)) {
+            ## See if this node is in a subgraph
+            if (length(subGList) > 0) {
+                subGs <- which(unlist(lapply(subGList, function(x,y){y %in% nodes(x)},
+                                             nodeNames[i])))
+                if (length(subGs) == 1)
+                    pNodes[[i]]@subG <- subGs ## FIXME: Need replace method
+                else if (length(subGs) > 1)
+                    stop("Node ", nodeNames[i], " in multiple subgraphs")
+            }
+        }
+
+        for (j in seq(along=nodeAttrs)) {
+            names <- names(nodeAttrs[[j]])
+            for (k in seq(along=nodeAttrs[[j]])) {
+                pNodes[[ names[k] ]]@attrs[[ attrNames[j] ]] <-
+                    as.character(nodeAttrs[[j]][k])
+            }
+        }
+    }
+
+    pNodes
 }
 
 
 buildEdgeList <- function(graph, recipEdges=c("combined", "distinct"),
-                          edgeAttrs=list(), subGList=list(), defAttrs=list()) {
-
+                          edgeAttrs=list(), subGList=list()) {
     recipEdges <- match.arg(recipEdges)
 
-    edgeNames <- edgeNames(graph, "distinct")
-
-    if ((recipEdges == "combined")&&(length(edgeNames) > 0))
-        removed <- which(! edgeNames %in% edgeNames(graph, "combined"))
-    else
-        removed <- character()
-
-    ## Generate the list of pEdge objects
-    .Call("Rgraphviz_buildEdgeList", edgeL(graph), edgemode(graph),
-          subGList, edgeNames, removed, edgeAttrs, defAttrs,
-          PACKAGE="Rgraphviz")
-}
-
-setMethod("edgeNames", "Ragraph", function(object,
-                                           recipEdges=c("combined",
-                                           "distinct")) {
-    recipEdges <- match.arg(recipEdges)
-
-    edgeNames <- sapply(AgEdge(object), function(x) paste(tail(x), head(x), sep="~"))
-
-    if (recipEdges == "combined") {
-        revNames <- sapply(AgEdge(object), function(x) paste(head(x),
-                                                             tail(x), sep="~"))
-
-        handled <- character()
-        remove <- numeric()
-        for (i in 1:length(edgeNames)) {
-            if ((recipEdges == "distinct") || (! revNames[i] %in% handled))
-                handled <- c(handled, edgeNames[i])
-            else
-                remove <- c(remove, i)
-        }
-        if (length(remove) > 0)
-            edgeNames <- edgeNames[-remove]
+    buildPEList <- function(x,y, edgemode) {
+        if (edgemode == "directed")
+            lapply(y, function(z) {new("pEdge", from=x, to=z,
+                                       attrs=list(arrowhead="open"))})
+        else
+           lapply(y, function(z) {new("pEdge", from=x, to=z,
+                                      attrs=list(arrowhead="none"))})
     }
-    edgeNames
-})
+
+    buildSubGEdgeNames <- function(subG) {
+        x <- edges(subG)
+        z <- names(x)
+        as.vector(mapply(paste, x, z, MoreArgs=list(sep="~")))
+    }
 
 
-removedEdges <- function(graph) {
-    if ((!is(graph, "graph")) && (!is(graph,"Ragraph")))
-        stop("removedEdges only accepts objects of class ",
-             "'graph' or 'Ragraph'")
+    edgemode <- edgemode(graph)
 
-    allEdges <- edgeNames(graph, "distinct")
-    combEdges <- edgeNames(graph, "combined")
-    which(! allEdges %in% combEdges)
-}
+    to <- edges(graph)
+    if (length(to) == 0)
+        return(list())
 
-setMethod("edgeL", "clusterGraph", function(graph, index) {
-    ## temporary function, just a placeholder until I put in
-    ## something better (most likely in C)
+    from <- names(to)
 
-    clusters <- connComp(graph)
-    nodes <- nodes(graph)
-    edgeL <- list()
+    pEdges <- mapply(buildPEList, from, to, MoreArgs=list(edgemode=edgemode))
 
-    cur <- 1
-    for (i in seq(along=clusters)) {
-        curClust <- clusters[[i]]
-        for (j in seq(along = curClust)) {
-            edgeL[[cur]] <- list(edges=match(curClust[-j], nodes))
-            cur <- cur + 1
+    ## FIXME: Sometimes the Mapply has a list of lists,
+    ## and sometimes just a list of length unlist(edges(graph))
+    ## In the former case it needs to be unlisted, the latter
+    ## it doesn't.  Why the difference?  Need to sort this out.
+    if (! any(unlist(lapply(pEdges, inherits, "pEdge"))))
+        pEdges <- unlist(pEdges, recursive=FALSE)
+
+    edgeNames <- unlist(lapply(pEdges, function(x) {
+        paste(from(x), to(x), sep="~")}))
+    names(pEdges) <- edgeNames
+
+    subGEdgeNames <- lapply(subGList, buildSubGEdgeNames)
+
+    attrNames <- names(edgeAttrs)
+    for (j in seq(along=edgeAttrs)) {
+        names <- names(edgeAttrs[[j]])
+
+        for (k in seq(along=edgeAttrs[[j]])) {
+            pEdges[[ names[k] ]]@attrs[[ attrNames[j] ]] <-
+                as.character(edgeAttrs[[j]][k])
         }
     }
-    names(edgeL) <- nodes
 
-    if (! missing(index))
-        edgeL <- edgeL[[index]]
+    handled <- character()
+    remove <- numeric()
+    for (i in 1:length(edgeNames)) {
+        revName <- paste(to(pEdges[[i]]), from(pEdges[[i]]),
+                         sep="~")
 
-    edgeL
-})
+        if ((recipEdges == "distinct") || (! revName %in% handled)) {
+            handled <- c(handled, edgeNames[i])
+            ## See if this edge is in a subgraph
+            if (length(subGList) > 0) {
+                subGs <- which(unlist(lapply(subGEdgeNames, function(x,y)
+                                         {y %in% x}, edgeNames[i])))
+                if (length(subGs) == 1)
+                    pEdges[[i]]@subG <- subGs
+                else if (length(subGs) == 2)
+                    stop("Edge ", edgeNames[i], " is in multiple subgraphs")
+            }
+        }
+        else {
+            remove <- c(remove, i)
+            if ((is.null(pEdges[[revName]]@attrs$arrowtail))
+                &&(edgemode == "directed"))
+                pEdges[[revName]]@attrs$arrowtail <- "open"
+        }
+    }
 
-setMethod("edgeL", "distGraph", function(graph, index) {
-    ## Just like the clusterGraph edgeL method, this should be
-    ## considered a poor place holder for now.
-    edges <- edges(graph)
-    edgeL <- mapply(function(x, y, nodes) {
-        out <- list(edges=match(x, nodes), weights=y)
-    }, edges, edgeWeights(graph), MoreArgs=list(nodes=nodes(graph)),
-                    SIMPLIFY=FALSE)
-    names(edgeL) <- names(edges)
+    if (length(remove) > 0)
+        pEdges <- pEdges[-remove]
 
-    if (! missing(index))
-        edgeL <- edgeL[[index]]
-
-    edgeL
-})
-
-
-
+    pEdges
+}
 

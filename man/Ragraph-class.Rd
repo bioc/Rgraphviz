@@ -7,7 +7,6 @@
 \alias{layoutType}
 \alias{edgemode}
 \alias{boundBox}
-\alias{edgeNames,Ragraph-method}
 \alias{AgEdge,Ragraph-method}
 \alias{agraph,Ragraph-method}
 \alias{boundBox,Ragraph-method}
@@ -15,11 +14,6 @@
 \alias{layoutType,Ragraph-method}
 \alias{edgemode,Ragraph-method}
 \alias{AgNode,Ragraph-method}
-\alias{getNodeLW,Ragraph-method}
-\alias{getNodeRW,Ragraph-method}
-\alias{getNodeHeight,Ragraph-method}
-\alias{getNodeXY,Ragraph-method}
-\alias{getNodeXY}
 \alias{getNodeLocs}
 \alias{getNodeNames}
 \alias{getNodeLabels}
@@ -56,6 +50,8 @@ Objects can be created by calls to the function \code{agopen}.
       external libgraph pointer}
     \item{laidout}{\code{signature(object = "Ragraph")}: Returns the
       \code{laidout} slot}
+    \item{nodes}{\code{signature(object = "Ragraph")}: Returns the node
+      list.}
     \item{boundBox}{\code{signature(object = "Ragraph")}: Returns the
       bounding box.}
     \item{AgEdge}{\code{signature(object = "Ragraph")}: Returns the edge
@@ -64,21 +60,8 @@ Objects can be created by calls to the function \code{agopen}.
       list.}
     \item{edgemode}{\code{signature(object = "Ragraph")}: Retrieves the
       edgemode of this object.}
-    \item{layoutType}{\code{signature(object = "Ragraph")}: Retrieves the
+    \item{layoutType}{\code{signature(object = "Ragraph")}: Retrives the
       method used for the layout of this graph.}
-    \item{edgeNames}{\code{signature(object = "Ragraph")}: Returns a
-      vector of the names of the edges in this graph.}
-    \item{getNodeXY}{\code{signature(object = "Ragraph")}: Returns a two
-      element list, the first element contains a numerical vector with
-      the 'x' positions of every node in this graph, and the second
-      element contains a numerical vector with the 'y' positions for
-      every node in the graph.}
-    \item{getNodeHeight}{\code{signature(object = "Ragraph")}: Returns a
-      vector with the heights of every node in the graph}
-    \item{getNodeLW}{\code{signature(object = "Ragraph")}: Returns a
-      vector with the left width of every node in the graph.}
-    \item{getNodeRW}{\code{signature(object = "Ragraph")}: Returns a
-      vector with the right width of every node in the graph.}
   }
 }
 \author{Jeff Gentry}
@@ -92,26 +75,5 @@ M <- 1:4
 g1 <- randomGraph(V, M, .2)
 z <- agopen(g1,"foo")
 z
-
-## The various methods in action
-
-## These methods are all used to obtain positional information about nodes
-getNodeXY(z)
-getNodeHeight(z)
-getNodeLW(z)
-getNodeRW(z)
-
-## Retrieve information about the edges in the graph
-edgeNames(z)
-edgemode(z)
-
-## These get information about the layout
-laidout(z)
-layoutType(z)
-boundBox(z)
-
-## Used to retrieve the entire list of edges or nodes
-AgEdge(z)
-AgNode(z)
 }
 \keyword{classes}

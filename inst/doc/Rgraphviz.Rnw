@@ -98,22 +98,13 @@ they are showed separately.
 plot(rEG, recipEdges="distinct")
 @
 
-The function \Rfunction{removedEdges} can be used to return a
-numerical vector detailing which edges (if any) would be removed by
-the combining of edges.
-
-<<removedEdges>>=
-a <- removedEdges(g1)
-a
-@
-
 \section{SubGraphs}
 
-\Rpackage{Rgraphviz} supports the ability to define specific
-clustering of nodes.  This will instruct the layout algorithm to
-attempt to keep the clustered nodes close together.  To do this, one
-must first generate the desired set (one or more) of subgraphs with
-the \Robject{graph} object.
+Rgraphviz supports the ability to define specific clustering of
+nodes.  This will instruct the layout algorithm to attempt to keep the
+clustered nodes close together.  To do this, one must first generate
+the desired set (one or more) of subgraphs with the \Robject{graph}
+object.
 
 <<getSubgraphs>>=
 sg1 <- subGraph(c("a","d","j","i"), g1)
@@ -125,39 +116,10 @@ sg3
 @
 
 To plot using the subgraphs, one must use the \Rfunction{subGList}
-argument which is a list of lists, with each sublist having three
-elements: 
-
-\begin{itemize}
-\item \Robject{graph} : The actual \Robject{graph} object for this
-subgraph.
-\item \Robject{cluster} : A logical value noting if this is a \texttt{cluster}
-or a \texttt{subgraph}.  A value of \Robject{TRUE} (the default, if
-this element is not used) indicates a \texttt{cluster}.  In Graphviz,
-\texttt{subgraphs} are used as an organizational mechanism but are not
-necessarily laid out in such a way that they are visually together.
-Clusters are laid out as a separate graph, and thus Graphviz will tend
-to keep nodes of a cluster together.  Typically for
-\Rpackage{Rgraphviz} users, a \texttt{cluster} is what one wants to
-use.
-\item \Robject{attrs} : A named vector of attributes, where the names are the
-attribute and the elements are the value.  For more information about
-attributes, see the section \texttt{Attributes} below.
-\end{itemize}
-
-Please note that only the \Robject{graph} element is required.  If the
-\Robject{cluster} element is not specified, the subgraph is assumed to
-be a \texttt{cluster} and if there are no attributes to specify for
-this subgrpah then \Robject{attrs} is unecessary.
-
+argument which accepts a list of every subgraph.
 
 <<subGplot, fig=TRUE>>=
-subGList <- vector(mode="list", length=3)
-subGList[[1]] <- list(graph=sg1)
-subGList[[2]] <- list(graph=sg2, cluster=FALSE)
-subGList[[3]] <- list(graph=sg3)
-
-plot(g1, subGList=subGList)
+plot(g1, subGList=list(sg1, sg2, sg3))
 @
 
 To demonstrate the differences that will appear with different
@@ -166,24 +128,7 @@ subgraph patterns, another example is provided:
 <<subGPlot2, fig=TRUE>>=
 sg1 <- subGraph(c("a","c","d","e","j"), g1)
 sg2 <- subGraph(c("f","h","i"), g1)
-plot(g1, subGList=list(list(graph=sg1), list(graph=sg2)))
-@
-
-\subsection{A Note About Edge Names}
-
-While internal node naming is quite straight forward (it is simply
-taken from the \Robject{graph} object), \Rpackage{Rgraphviz} needs to
-be able to uniquely identify edges by name.  End users as well will
-need to be able to do this to correctly assign attributes (see
-\verb+Attributes+).  The name of an edge is \verb+x~y+ where \verb+x+ is the tail
-node and \verb+y+ is the head node.  The method \Rfunction{edgeNames} can be
-used to obtain a vector of all edge names, and takes the argument
-\Rfunction{recipEdges} so that the output correctly matches which
-edges will be used by \Rpackage{Rgraphviz}.
-
-<<edgeNames>>=
-edgeNames(g1)
-edgeNames(g1, recipEdges="distinct")
+plot(g1, subGList=list(sg1, sg2))
 @
 
 \section{Attributes}
@@ -195,22 +140,23 @@ which are given explicit options using Rgraphviz - such as colors of
 nodes and edges, which node to center on for twopi plots, node labels,
 edge labels, edge weights, arrow heads and tails, etc.  A list of all
 available attributes is accessible online at:
-\url{http://www.research.att.com/~erg/graphviz/info/attrs.html}.  Note
+http://www.research.att.com/~erg/graphviz/info/attrs.html".  (Note
 that there are some differences between default values and also some
 attributes will not have an effect in Rgraphviz.  Please see the man
-page for \Rfunction{graphvizAttributes} for more details.
+page for \Rfunction{graphvizAttributes} for more details)
 
 Attributes can be set both globally (for the entire graph, for all
 edges, all nodes, etc) as well as on a per-node and per-edge basis.
 Global attributes are set via a list and passed in as the
 \Robject{attrs} argument to \Rfunction{plot}.  A default set of global
-attributes are used for global values which are not specified (by
-using the \Rfunction{getDefaultAttrs} function).  The
-\Rfunction{getDefaultAttrs} function will take a partial global
-attribute list (see below for a description) and/or the layout type to
-be used (dot, neato, or twopi) and will generate an attribute list to
-be used with defaults for values that the user did not specify.  The
-list has four elements: 'graph', 'cluster', 'edge' and 'node'.  Within
+attributes are used if nothing else is provided, using the function
+\Rfunction{getDefaultAttrs} - users are encouraged to work off of the
+return of this function instead of creating their own from scratch as
+then attributes which they don't want to change from the defaults will
+still be kept intact.  The \Rfunction{getDefaultAttrs} function takes
+as a parameter the layout type to be used (dot, neato or twopi) but
+defaults to dot.  The \Robject{attrs} list is a four element list
+with element names of 'graph', 'cluster', 'edge' and 'node'.  Within
 each element is another list, where the names correspond to attributes
 and the values correspond to the value to use globally on that
 attribute.  An example of this structure can be seen with the default
@@ -219,20 +165,6 @@ list provided by \Rfunction{getDefaultAttrs}:
 <<defAttrs>>=
 defAttrs <- getDefaultAttrs()
 defAttrs
-@
-
-To manually set some attributes, but not others, pass in a list with
-the specific attributes that you desire.  In the following example, we
-will be setting two attributes (\Robject{label} and
-\Robject{fillcolor} for nodes, one for edges (\Robject{color}) and one
-for the graph itself (\Robject{rankdir}).  We could also have called
-\Rfunction{getDefaultAttrs} with the same list that we are passing
-as the \Robject{attrs} argument, but there is no need here.
-
-<<defAttrs2, fig=TRUE>>=
- plot(g1, attrs=list(node=list(label="foo", fillcolor="lightgreen"),
-	             edge=list(color="cyan"),
-                     graph=list(rankdir="LR")))
 @
 
 Users can also set attributes per-node and per-edge.  In this case, if
@@ -245,22 +177,21 @@ are set in the same basic manner - the attributes are set using a list
 where the names of the elements are the attributes, and each element
 contains a named vector.  The names of this vector correspond to
 either node names or edge names, and the values of the vector are the
-values to set the attribute to for that node or edge.  The following
-sections will demonstrate how to set per-node and per-edge attributes
-for commonly desired tasks.  For these we will construct two lists,
-\Robject{nAttrs} and \Robject{eAttrs} to pass in to \Rfunction{plot}.
-
+values to set the attribute to for that node or edge.  The one place
+to take care about is with the edge names in that the name of an edge
+is x~y where x is the 'from' node and y is the 'to' node.  Note that
+even with an undirected graph that x~y is not the same thing as y~x as
+it depends on how the edge was explicitly defined.  These lists are
+then passed in to \Rfunction{plot} as the arguments \Robject{nodeAttrs}
+and \Robject{edgeAttrs}.  The following sections will demonstrate how to
+set per-node and per-edge attributes for commonly desired tasks.  For
+these we will construct two lists, \Robject{nAttrs} and \Robject{eAttrs}
+to pass in to \Rfunction{plot}.
 
 <<baseLists>>=
 nAttrs <- list()
 eAttrs <- list()
 @
-
-Please note to take care with edge names.  If \Robject{recipEdges} is
-set to \Robject{combined}, then only one of any pair of reciprocal
-edges will actually be used.  Users should utilize the
-\Rfunction{edgeNames} method to be sure that they are setting
-attributes for the right edge names.
 
 \section{Labels}
 
@@ -269,36 +200,12 @@ have a label.  However, both can have custom labels supplied via
 attributes.
 
 <<labels, fig=TRUE>>=
-nAttrs$label <- c(a="lab1", b="lab2", g="lab3", d="lab4")
+nAttrs$label <- c(a="lab1", b="lab2", g="lab3")
 nAttrs
 
-eAttrs$label <- c("a~h"="test", "c~h"="test2")
+eAttrs$label <- c("a~h"="test", "h~c"="test2")
 eAttrs
 
-plot(g1, nodeAttrs=nAttrs, edgeAttrs=eAttrs)
-@
-
-\subsection{Using Edge Weights For Labels}
-
-A common desire for edge weights is to use the edge weights of the
-edges for the labels on a plotted graph.  This can be done with
-just a couple of extra steps.  First we will get the edge weights, and
-unlist them, to provide them in vector format.  Then, first we will
-determine which of those to remove (this step is only necessary if
-\Robject{recipEdges} is set to \Robject{TRUE}, which is default
-behavior for both undirected and directed graphs) and remove those
-positions from our vector.  Finally, we will get the set of edge names
-which will be used for plotting and bundle that into the appropriate
-structure for plotting.
-
-<<edgeWeightLabels, fig=TRUE>>=
-ew <- edgeWeights(g1)
-lw <- unlist(unlist(ew))
-toRemove <- removedEdges(g1)
-if (length(toRemove) > 0)
-  lw <- lw[-toRemove]
-names(lw) <- edgeNames(g1)
-eAttrs$label <- lw
 plot(g1, nodeAttrs=nAttrs, edgeAttrs=eAttrs)
 @
 
@@ -315,14 +222,14 @@ labels can also be specified with the \Robject{fontcolor} attribute.
 nAttrs$color <- c(a="red", b="red", g="green", d="blue")
 
 ## Specify edge drawing color
-eAttrs$color <- c("a~d"="blue", "c~h"="purple")
+eAttrs$color <- c("a~d"="blue", "h~c"="purple")
 
 ## Specify node fill color
 nAttrs$fillcolor <- c(j="yellow")
 
 ## label color
 nAttrs$fontcolor <- c(e="green", f="red")
-eAttrs$fontcolor <- c("a~h"="green", "c~h"="brown")
+eAttrs$fontcolor <- c("a~h"="green", "h~c"="brown")
 
 nAttrs
 eAttrs
@@ -334,20 +241,18 @@ plot(g1, nodeAttrs=nAttrs, edgeAttrs=eAttrs)
 
 The \Rpackage{Rgraphviz} package allows you to specify different
 shapes for your nodes.  Currently, the only shapes allowed are
-\Robject{circle} (the default), \Robject{ellipse}, \Robject{plaintext}
-and \Robject{box} (Note that \Robject{plaintext} is simply a
-\Robject{box} that is not displayed for purposes of layout).
+\Robject{circle} (the default), \Robject{ellipse} and \Robject{box}.
 As with previous attributes, the shape can be set globally or for
 specific nodes.  Here is the same graph from the previous example,
 with the default shape as \Robject{ellipse} and with two nodes
-specified as being \Robject{box}, one as a \Robject{circle} and one as
-a \Robject{plaintext} node:
+specified as being \Robject{box} and two as \Robject{circle}:
 
 <<nodeShapes, fig=TRUE>>=
 defAttrs$node$shape <- "ellipse"
-nAttrs$shape <- c(e="box", g="circle", j="box", d="plaintext")
+nAttrs$shape <- c(e="box", g="circle", j="box", d="circle")
 plot(g1, attrs=defAttrs, nodeAttrs=nAttrs)
 @
+
 
 \section{Setting attributes via node and edge lists}
 
@@ -372,26 +277,43 @@ edges[[1]]
 @
 
 You can now see the contents of the first \Robject{pNode} and first
-\Robject{pEdge} objects in their respective lists.  These two
-functions can also utilize the attribute lists that were passed into
-\Rfunction{agopen}.  Note that if we are using default attributes,
-that for the \Rfunction{buildNodeList} and \Rfunction{buildEdgeList}
-functions we only want to pass in defaults for node and edges, respectively.
+\Robject{pEdge} objects in their respective lists.  Now, to
+demonstrate some simple attribute examples such as node and edge
+color, perhaps we'd like to have the "c" node be blue and the between
+"a" and "b" to be colored green, we can set it up as such:
 
-<<buildwithAttrs>>=
-  nodes <- buildNodeList(g1, nodeAttrs=nAttrs, defAttrs=defAttrs$node)
-  edges <- buildEdgeList(g1, edgeAttrs=eAttrs, defAttrs=defAttrs$edge)
-  nodes[[1]]
-  edges[[1]]
+<<colorLists>>=
+nodes$"c"@attrs$fillcolor <- "blue"
+nodes$"c"
+edges$"a~b"@attrs$color <- "green"
+edges$"a~b"
 @
 
-Notice the difference between the objects in the second example as
-compared with the first, containing the specified attributes.  Now we
-can plot this graph, which should look identical to the previous plot:
+You can see that the \Robject{attrs} slot now has a 'color' element to
+it.  
 
-<<plotbuild, fig=TRUE>>=
-  vv <- agopen(name="foo", nodes=nodes, edges=edges, edgeMode="undirected")
+<<plotListGraph1, fig=TRUE>>=
+  vv <- agopen(name="test1", nodes=nodes, edges=edges,
+               edgeMode="undirected")
   plot(vv)
+@
+
+Note that the name argument is required by Graphviz but is not
+currently used for anything in \Rpackage{Rgraphviz}.  The edgeMode
+argument is required in this case because Graphviz needs to know if
+this graph is directed or not and \Rpackage{Rgraphviz} can't
+necessarily determine the status of the graph from the node and edge
+lists.  One could suggest to look at the arrowhead/tails (or lack
+thereof) and derive it that way, but the arrowhead/tails are
+completely independent from the edgemode of the graph:
+
+<<addArrows, fig=TRUE>>=
+edges$"a~e"@attrs$arrowhead <- "open"
+edges$"a~h"@attrs$arrowhead <- "open"
+edges$"a~h"@attrs$arrowtail <- "open"
+vv <- agopen(name="test1", nodes=nodes, edges=edges,
+               edgeMode="undirected")
+plot(vv) 
 @
 
 Here we've added our own arrowheads to the a~e and a~h edges as well
@@ -401,29 +323,6 @@ will view these edges as undirected.  This same technique can be used
 in the case where a directed graph has reciprocated edges and one
 wants to combine those edges into single edges with arrows in both
 directions.
-
-Next we will use a completely different graph, one of the graphs as
-part of the \Robject{graphExamples} dataset in the \Rpackage{graph}
-package and provide another demonstration of working with attributes
-to customize your plot.
-
-<<graph17, fig=TRUE>>=
-data(graphExamples)
-z <- graphExamples[[17]]
-nNodes <- length(nodes(z))
- 
-nA <- list()
-nA$fixedSize<-rep(FALSE, nNodes)
-nA$height <- nA$width <- rep("1", nNodes)
-nA$label <- rep("foo", nNodes)
-nA$color <- rep("green", nNodes)
-nA$fillcolor <- rep("orange", nNodes)
-nA$shape <- rep("circle", nNodes)
-nA$fontcolor <- rep("blue", nNodes)
-nA$fontsize <- rep(14, nNodes)
-nA <- lapply(nA, function(x) { names(x) <- nodes(z); x})
-plot(z, nodeAttrs=nA)
-@
 
 \section{Plotting with non-standard nodes}
 
@@ -437,7 +336,7 @@ argument to \Rfunction{plot} to define how the nodes are drawn.  This
 argument can be either of length one (in which case all nodes are
 drawn with it) or a list of length equal to the number of nodes in the
 graph (in which case the first element of the list is used to draw the
-first node, etc).  To work correctly, the function will take four
+first node, etc).  To work correctly, the function will take three
 arguments - the first \Robject{node} is an object of class
 \Robject{AgNode}, which describes the node's location and other
 information and the second parameter, \Robject{ur} is of class
@@ -445,11 +344,8 @@ information and the second parameter, \Robject{ur} is of class
 bounding box (where the lower left is 0,0).  The third parameter,
 \Robject{attrs}, is a node attribute list as discussed in the
 "Attributes" section and represents post-layout attribute changes
-where the user wants to override values present in the layout.  
-The fourth argument, \Robject{radConv} is used by \Rpackage{Rgraphviz}
-to convert Graphviz units to R plotting units.  This argument will
-probably not need to be specified by any custom drawing function, but
-does need to exist.   A custom drawing function is free to ignore these values, but the
+where the user wants to override values present in the layout.  A
+custom drawing function is free to ignore these values, but the
 argument must exist in the function declaration to at least accept the
 value being passed in.  The default function for node drawing on all
 nodes is \Rfunction{drawAgNode}, so if one wants to use a custom
@@ -457,7 +353,7 @@ function for some nodes but the standard function for others, the list
 passed in to \Robject{drawNode} can have the custom functions in the
 elements corresponding to those nodes desired to have special display
 and \Rfunction{drawAgNode} in the elements corresponding to the nodes
-where standard display is desired.
+where standard display is desired. 
 
 One function included with the \Rpackage{Rgraphviz} package that can
 be used for such alternate node drawing is \Rfunction{pieGlyph}.  This
@@ -470,52 +366,49 @@ expression levels of the samples in the exprSet for that probe.
 
 <<pieChart, fig=TRUE>>=
 
-if( require("Biobase") ) {
-    data(eset)
+require("Biobase") || stop("Biobase needed for this example")
+data(eset)
 
-    exprs <- exprs(eset)[100:109,]
-    probes <- rownames(exprs)
+exprs <- exprs(eset)[100:109,]
+probes <- rownames(exprs)
 
-    ## Construct a graph for these nodes
-    set.seed(123)
-    pieGraph <- randomGraph(probes, 1:4, .2)
+## Construct a graph for these nodes
+set.seed(123)
+pieGraph <- randomGraph(probes, 1:4, .2)
 
-    ## Do a layout of the graph, but don't plot it yet
-    pgLayout <- agopen(pieGraph, "foo")
+## Do a layout of the graph, but don't plot it yet
+pgLayout <- agopen(pieGraph, "foo")
 
-    counts <-  apply(exprs, 1, function(x) {
-        table(cut(x, breaks=c(-Inf, 100, 500, Inf)))
-    })
+counts <-  apply(exprs, 1, function(x) {
+              table(cut(x, breaks=c(-Inf, 100, 500, Inf)))
+           })
 
-    ## Need to construct a list of drawing functions for the Rgraphviz plot
-    plotPieChart <- function(curPlot, counts) {
-        buildDrawing <- function(x) {
-            force(x)
-            y <- x*100+1
-            function(node, ur, attrs=list(), radConv=1) {
-                nodeCenter <- getNodeCenter(node)
-                pieGlyph(y, xpos=getX(nodeCenter),
-                         ypos=getY(nodeCenter),
-                         radius=getNodeRW(node),
-                         col=c("blue", "green", "red"))
-            }
-        }
-        drawing <- vector(mode="list", length=length(probes))
-        for (i in 1:length(drawing)) {
-            drawing[[i]] <- buildDrawing(counts[,i])
-        }
-
-        plot(curPlot, drawNode=drawing, main="Example Pie Chart Plot")
-        legend(240, 100, legend=c("No Data", "0-100", "101-500", "500+"),
-               fill=c("white", "blue", "green", "red"))
+## Need to construct a list of drawing functions for the Rgraphviz plot
+plotPieChart <- function(curPlot, counts) {
+    buildDrawing <- function(x) {
+	force(x)
+	y <- x*100+1
+	function(node, ur, attrs=list()) {
+            nodeCenter <- getNodeCenter(node)
+            pieGlyph(y, xpos=getX(nodeCenter),
+                     ypos=getY(nodeCenter),
+                     radius=getNodeRW(node),
+                     col=c("blue", "green", "red"))
+	}
     }
-    plotPieChart(pgLayout, counts)
-} else {
-  cat("This example is missing since you do not have Biobase")
+    drawing <- vector(mode="list", length=length(probes))
+    for (i in 1:length(drawing)) {
+	drawing[[i]] <- buildDrawing(counts[,i])
+    }
+
+    plot(curPlot, drawNode=drawing, main="Example Pie Chart Plot")
+    legend(310, 100, legend=c("No Data", "0-100", "101-500", "500+"),
+           fill=c("white", "blue", "green", "red"))
 }
+plotPieChart(pgLayout, counts)
 @
 
-To construct this plot, we constructed a complete function, although
+To perform this plot, we constructed a complete function, although
 this is not necessary - one can take any path they desire to build the
 list of drawing functions.  Also note that in this plot the nodes do
 not have labels as it would look confusing, but those could be easily
@@ -523,67 +416,5 @@ added with a line such as \Robject{drawTxtLabel(txtLabel(node),
 getX(nodeCenter), getY(nodeCenter))} in the \Rfunction{buildDrawing}
 sub-function above.  The \Rfunction{drawAgNode} should be used as a
 guide for basic activities such as this.
-
-\section{Other types of graphs}
-
-Up to this point, we have only been working with objects of class
-\Robject{graphNEL}, but the other subclasses of graph (such as
-\Robject{distGraph} and \Robject{clusterGraph}) will work as well
-(provided that they support the \Rfunction{nodes} method as well as
-have an \Rfunction{edgeL} method defined to generate an edge list like
-the one for \Robject{graphNEL}).
-
-In this section, we'll demonstrate a few examples of using graphs of
-classes other then \Robject{graphNEL}.  Users should not notice a
-difference in the actual interface, but this will also provide some
-visual examples as to how these types of graphs will appear.
-
-For our first set of examples, we will create an object of class
-\Robject{clusterGraph} and then plot it using all three layout
-methods:
-
-<<clusterGraph1, fig=TRUE>>=
-  cG <- new("clusterGraph", clusters=list(a=c(1:10), b=c(11:13),
-					   c=c(14:20), d=c(21, 22)))
-  cG
-  plot(cG)
-@
-
-And now the same graph using "twopi":
-
-<<cgTwopi, fig=TRUE>>=
-  plot(cG, "twopi")
-@
-
-And finally, again in "neato":
-
-<<cgNeato, fig=TRUE>>=
-  plot(cG, "neato")
-@
-
-The same demonstration is now given with a \Robject{distGraph} object:
-
-<<distGraph1, fig=TRUE>>=
-    x <- rnorm(26)
-    names(x) <- letters
-    d1 <- dist(x)
-    dG <- new("distGraph", Dist=d1)
-    dG
-
-    plot(dG)
-@
-
-Again using "twopi":
-
-<<dgTwopi, fig=TRUE>>=
-  plot(dG, "twopi")
-@
-
-And finally using "neato":
-
-<<dgNeato, fig=TRUE>>=
-  plot(dG, "neato")
-@ 
-
 
 \end{document}

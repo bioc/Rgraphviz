@@ -28,20 +28,6 @@
                        edgeAttrs=list()) {
                   plot.new()
 
-                  ## !!!!
-                  ## FIXME: Do we still need node/edge/subGAttrs here?
-                  ## !!!!
-
-
-                  ## Some plots can get clipped and shouldn't be.
-                  ## Change the clip setting to clip to the figure
-                  ## region (should it be the device region?  I
-                  ## don't think so, but perhaps).  As far as I
-                  ## can tell, this doesn't cause any problems
-                  ## with bounding box issues and the like.
-                  op <- par(xpd=TRUE)
-                  on.exit(par(op), add=TRUE)
-
                   nNodes <- length(AgNode(x))
 
                   if (nNodes > 0) {
@@ -72,36 +58,32 @@
 
                       title(main=main, xlab=xlab, ylab=ylab, sub=sub)
 
-                      radConv <- getRadiusDiv(ur)
-
                       if (length(drawNode) == 1)
-                         lapply(AgNode(x), drawNode, ur, nodeAttrs, radConv)
+                         lapply(AgNode(x), drawNode, ur, nodeAttrs)
                       else if (length(drawNode) == nNodes) {
                           nodes <- AgNode(x)
                           for (i in 1:nNodes) {
                               curDrawFun <- drawNode[[i]]
-                              curDrawFun(nodes[[i]], ur, nodeAttrs, radConv)
-                          }
-                      }
+                              curDrawFun(nodes[[i]], ur, nodeAttrs)
+                          }                      }
                       else
                           stop("Length of the drawNode parameter",
                                " must be either length 1 or the",
                                " number of nodes.")
 
-                      ## Use the smallest node radius as a means
-                      ## to scale the size of the arrowheads in
-                      ## directed graphs
-                      arrowLen <- min(sapply(AgNode(x), getNodeRW)) / (radConv*3)
+                      rad <- min(unlist(lapply(AgNode(x), getNodeRW)))
+
                       ## Plot the edges
-                      q <- lapply(AgEdge(x), function(x, arrowLen,
+                      q <- lapply(AgEdge(x), function(x, rad,
                                                       edgemode, ur,
                                                       attrs) {
                           ## See if there's a specified edgeCol for this
                           if (!is(x,"AgEdge"))
                               stop(paste("Class:",class("AgEdge")))
-                          lines(x, len=arrowLen, edgemode=edgemode,
+                          rad <- convertRadius(rad, ur)
+                          lines(x, len=(rad / 3), edgemode=edgemode,
                                 attrs=attrs)
-                      }, arrowLen, edgemode(x), ur, edgeAttrs)
+                      }, rad, edgemode(x), ur, edgeAttrs)
                   }
                   else {
                       stop("No nodes in graph")
@@ -112,7 +94,7 @@
 }
 
 
-drawAgNode <- function(node, ur, attrs=list(), conv=1) {
+drawAgNode <- function(node, ur, attrs=list()) {
     nodeName <- name(node)
 
     ## First get X/Y
@@ -124,7 +106,7 @@ drawAgNode <- function(node, ur, attrs=list(), conv=1) {
     lw <- getNodeLW(node)
     height <- getNodeHeight(node)
 
-    rad <- rw / conv
+    rad <- convertRadius(rw, ur)
 
     attrNames <- names(attrs)
     if (("color" %in% attrNames)&&(nodeName %in% names(attrs$color)))
@@ -161,7 +143,7 @@ drawAgNode <- function(node, ur, attrs=list(), conv=1) {
                              rect(nodeX-lw, nodeY-(height/2),
                                   nodeX+rw, nodeY+(height/2),
                                   col=bg, border=FALSE)},
-           stop("Unimplemented node shape: ", shape))
+           stop("Unimplemented node shape"))
 
     drawTxtLabel(txtLabel(node), nodeX, nodeY, width=rad*2, nodeName, attrs)
 }
@@ -258,7 +240,7 @@ drawTxtLabel <- function(txtLabel, xLoc, yLoc, width, objName,
     }
 }
 
-getRadiusDiv <- function(ur) {
+convertRadius <- function(rad, ur) {
     outX <- getX(ur)
     outY <- getY(ur)
     outLim <- max(outY, outX)
@@ -276,7 +258,7 @@ getRadiusDiv <- function(ur) {
         conv <- outY/pin[2]
     }
 
-    conv
+    rad/conv
 }
 
 drawCircleNode <- function(nodeX, nodeY, ur, rad, fg, bg) {
@@ -284,31 +266,9 @@ drawCircleNode <- function(nodeX, nodeY, ur, rad, fg, bg) {
                       fg=fg, bg=bg,add=TRUE))
 }
 
-identifyGraph <- function(plotGraph, ...) {
-
-    ## Get the information for the nodes (x, y, labels)
-    xy <- getNodeXY(plotGraph)
-    nodes <- sapply(AgNode(plotGraph), name)
-
-    ## Now get the edges
-    edges <- AgEdge(plotGraph)
-    edgeNames <- sapply(edges, function(x) paste(tail(x),
-                                                 head(x), sep="~"))
-
-    edgeLabels <- character()
-    vals <- matrix(nrow = 0, ncol = 2)
-
-    for (i in 1:length(edges)) {
-        for (j in 1:numSplines(edges[[i]])) {
-            cur <- bezierPoints(getSpline(edges[[i]], j))
-            edgeLabels <- c(edgeLabels, rep(edgeNames[i], nrow(cur)))
-            vals <- rbind(vals, cur)
-        }
-    }
-
-    labels <- c(nodes, edgeLabels)
-    sel <- identify(c(xy$x, vals[,1]), c(xy$y, vals[,2]), labels, ...)
-
-    list(points=sel, labels=labels)
+getGraphSize <- function(graph) {
+    sizeStr <- getGraphAttr(graph, "size")
+    splitSize <- strsplit(sizeStr, ",")[[1]]
+    return(as.numeric(splitSize))
 }
 

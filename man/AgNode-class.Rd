@@ -9,13 +9,12 @@
 \alias{getNodeRW}
 \alias{getNodeLW}
 \alias{getNodeCenter}
-\alias{getRadiusDiv}
+\alias{convertRadius}
 \alias{getNodeHeight}
 \alias{style}
 \alias{style,AgNode-method}
 \alias{color,AgNode-method}
 \alias{fillcolor,AgNode-method}
-\alias{getNodeXY,AgNode-method}
 \alias{getNodeCenter,AgNode-method}
 \alias{getNodeHeight,AgNode-method}
 \alias{getNodeLW,AgNode-method}
@@ -63,9 +62,6 @@ Objects can be created by calls of the form \code{new("AgNode", ...)}.
       color to fill in the node image with.}
     \item{getNodeCenter}{\code{signature(object = "AgNode")}: Returns
       the center point of the node.}
-    \item{getNodeXY}{\code{signature(object = "AgNode")}: Returns the
-      center as a two element list, with the first element containing
-      the 'x' value and the second element containing the 'y' value.}
     \item{getNodeHeight}{\code{signature(object = "AgNode")}: Returns
       the height of the node. }
     \item{getNodeLW}{\code{signature(object = "AgNode")}: Returns the
@@ -91,19 +87,6 @@ M <- 1:4
 g1 <- randomGraph(V, M, .2)
 z <- agopen(g1,name="foo")
 x <- AgNode(z) ## list of AgNode objects
-vv <- x[[1]]
-
-## The methods in use
-color(vv)
-fillcolor(vv)
-getNodeCenter(vv)
-getNodeXY(vv)
-getNodeHeight(vv)
-getNodeLW(vv)
-getNodeRW(vv)
-name(vv)
-shape(vv)
-style(vv)
-txtLabel(vv)
+x[[1]]
 }
 \keyword{classes}
