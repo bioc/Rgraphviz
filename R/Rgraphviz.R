@@ -121,7 +121,7 @@ graphvizVersion <- function() {
 buildNodeList <- function(graph, nodeAttrs=list(), subGList=list()) {
     pNodes <- list()
 
-    nodeNames <- as.character(nodes(graph))
+    nodeNames <- nodes(graph)
 
     if (length(nodeNames) > 0) {
         pNodes <- lapply(nodeNames, function(x) {
@@ -160,12 +160,10 @@ buildEdgeList <- function(graph, recipEdges=c("combined", "distinct"),
 
     buildPEList <- function(x,y, edgemode) {
         if (edgemode == "directed")
-            lapply(y, function(z) {new("pEdge", from=as.character(x),
-                                       to=as.character(z),
+            lapply(y, function(z) {new("pEdge", from=x, to=z,
                                        attrs=list(arrowhead="open"))})
         else
-           lapply(y, function(z) {new("pEdge", from=as.character(x),
-                                      to=as.character(z),
+           lapply(y, function(z) {new("pEdge", from=x, to=z,
                                       attrs=list(arrowhead="none"))})
     }
 

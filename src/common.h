@@ -26,6 +26,8 @@
 
 #include <gvrender.h>
 
+static GVC_t *gvc;
+
 extern char *Info[];
 
 #define AGRAPH_T(x) ((agraph_t *)DATAPTR(x))
