@@ -1,5 +1,6 @@
 importFrom("graphics", "plot", "lines")
 importFrom("geneplotter", "imageMap")
+importFrom("utils", "head", "tail")
 
 import("methods")
                                                                                 
