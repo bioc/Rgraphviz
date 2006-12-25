@@ -1,7 +1,4 @@
 #include "common.h"
-#ifndef GRAPHVIZGT_2_4
-#include <circle.h>
-#endif
 
 SEXP R_scalarReal(double v) {
     SEXP ans = allocVector(REALSXP,1);
@@ -117,9 +114,9 @@ SEXP Rgraphviz_init(void) {
     /* Stifle graphviz warning messages, only return errors */
     agseterr(AGERR);
 
-#ifdef GRAPHVIZGT_2_4
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 4
     gvc = gvContext();
-#endif /* GRAPHVIZGT_2_4 */
+#endif 
 
     return(R_NilValue);
 }
@@ -396,13 +393,20 @@ SEXP assignAttrs(SEXP attrList, SEXP objList,
     return(objList);
 }
 
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR <= 3
+#define DOTLAYOUT 0
+#define NEATOLAYOUT 1
+#define TWOPILAYOUT 2
+#define CIRCOLAYOUT 3
+#define FDPLAYOUT 4
+#else
+static char *layouts[] = { "dot", "neato", "twopi", "circo", "fdp"};
+#endif
+
 
 SEXP Rgraphviz_doLayout(SEXP graph, SEXP layoutType) {
     /* Will perform a Graphviz layout on a graph */
     
-#ifdef GRAPHVIZGT_2_4
-	static char *layouts[] = { "dot", "neato", "twopi", "circo", "fdp"};
-#endif
 	Agraph_t *g;
 	Rboolean laidout;
 	SEXP slotTmp, nLayout, cPoints, bb;
@@ -422,7 +426,7 @@ SEXP Rgraphviz_doLayout(SEXP graph, SEXP layoutType) {
 			/* Note that we're using the standard dotneato */
 			/* layout commands for layouts and not the ones */
 			/* provided below.  This is a test */
-#ifndef GRAPHVIZGT_2_4
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR <= 3
 			switch(INTEGER(layoutType)[0]) {
 			case DOTLAYOUT:
 				dot_layout(g);
@@ -817,15 +821,28 @@ SEXP getNodeLayouts(Agraph_t *g) {
 
 
 	PROTECT(curLab = NEW_OBJECT(labClass));
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+	if (ND_label(node)->u.txt.para != NULL) {
+	    SET_SLOT(curLab, Rf_install("labelText"),
+		     R_scalarString(ND_label(node)->u.txt.para->str));
+	    snprintf(tmpString, 2, "%c",ND_label(node)->u.txt.para->just);
+	    SET_SLOT(curLab, Rf_install("labelJust"), R_scalarString(tmpString));
+#else
 	if (node->u.label->u.txt.line != NULL) {
 	    SET_SLOT(curLab, Rf_install("labelText"),
 		     R_scalarString(node->u.label->u.txt.line->str));
 	    snprintf(tmpString, 2, "%c",node->u.label->u.txt.line->just);
 	    SET_SLOT(curLab, Rf_install("labelJust"),
 		     R_scalarString(tmpString));
-	    
+#endif	    
+
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+	    SET_SLOT(curLab, Rf_install("labelWidth"),
+		     R_scalarInteger(ND_label(node)->u.txt.para->width));
+#else
 	    SET_SLOT(curLab, Rf_install("labelWidth"),
 		     R_scalarInteger(node->u.label->u.txt.line->width));
+#endif
 	    
 	    /* Get the X/Y location of the label */
 	    PROTECT(curXY = NEW_OBJECT(xyClass));
@@ -946,8 +963,13 @@ SEXP getEdgeLocs(Agraph_t *g, int numEdges) {
 	    /* Get the label information */
 	    if (edge->u.label != NULL) {
 		PROTECT(curLab = NEW_OBJECT(labClass));
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+		SET_SLOT(curLab, Rf_install("labelText"),	
+			 R_scalarString(ED_label(edge)->u.txt.para->str));
+#else
 		SET_SLOT(curLab, Rf_install("labelText"),
 			 R_scalarString(edge->u.label->u.txt.line->str));
+#endif
 		/* Get the X/Y location of the label */
 		PROTECT(curXY = NEW_OBJECT(xyClass));
 		SET_SLOT(curXY, Rf_install("x"),
@@ -957,12 +979,23 @@ SEXP getEdgeLocs(Agraph_t *g, int numEdges) {
 		SET_SLOT(curLab, Rf_install("labelLoc"), curXY);
 		UNPROTECT(1);
 			 
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+		snprintf(tmpString, 2, "%c",ED_label(edge)->u.txt.para->just);
+		SET_SLOT(curLab, Rf_install("labelJust"),
+			 R_scalarString(tmpString));
+#else
 		snprintf(tmpString, 2, "%c",edge->u.label->u.txt.line->just);
 		SET_SLOT(curLab, Rf_install("labelJust"),
 			 R_scalarString(tmpString));
+#endif
 
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+		SET_SLOT(curLab, Rf_install("labelWidth"),
+			 R_scalarInteger(ED_label(edge)->u.txt.para->width));
+#else
 		SET_SLOT(curLab, Rf_install("labelWidth"),
 			 R_scalarInteger(edge->u.label->u.txt.line->width));
+#endif
 
 		SET_SLOT(curLab, Rf_install("labelColor"),
 			 R_scalarString(edge->u.label->fontcolor));
@@ -999,10 +1032,14 @@ SEXP Rgraphviz_graphvizVersion(void) {
 }
 #else
 SEXP Rgraphviz_graphvizVersion(void) {
-#ifndef GRAPHVIZGT_2_4
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR <= 3
     return(R_scalarString(Info[1]));
-#else
+#endif
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >=4 && GRAPHVIZ_MINOR <= 9
     return(R_scalarString(gvc->info[1]));
+#endif
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+    return(R_scalarString(gvc->common.info[1]));
 #endif
 }
 #endif

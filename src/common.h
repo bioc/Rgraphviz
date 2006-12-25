@@ -1,14 +1,7 @@
 #ifndef __COMMON_H_INCLUDED
 #define __COMMON_H_INCLUDED
 
-#define DOTLAYOUT 0
-#define NEATOLAYOUT 1
-#define TWOPILAYOUT 2
-#define CIRCOLAYOUT 3
-#define FDPLAYOUT 4
-
 #define MINGRAPHVIZVER "1.9.20030423.0415"
-
 #define ENABLE_CODEGENS 1
 
 #include <Rinternals.h>
@@ -22,30 +15,37 @@
 
 #include <math.h>
 
-#ifdef GRAPHVIZGT_2_4
-#include <gvc.h>
-#include <gvplugin.h>
-#include <gvcext.h>
-#include <gvcint.h>
-#include <globals.h>
-#else
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR <= 3
 #include <render.h>
 #include <graph.h>
 #include <dotprocs.h>
 #include <neatoprocs.h>
 #include <adjust.h>
 #include <renderprocs.h>
-#endif
-
-/*#include <gvrender.h> */
-
-#ifndef GRAPHVIZGT_2_4
+#include <circle.h>
 extern char *Info[];
 #endif
 
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 4 && GRAPHVIZ_MINOR <= 9
+#include <gvc.h>
+#include <gvplugin.h>
+#include <gvcext.h>
+#include <gvcint.h>
+#include <globals.h>
+#endif
+
+#if GRAPHVIZ_MAJOR == 2 && GRAPHVIZ_MINOR >= 10
+#include <gvc.h>
+#include <gvplugin.h>
+#include <gvcext.h>
+#include <gvcjob.h>
+#include <gvcint.h>
+#include <globals.h>
+#endif
+
+
 static GVC_t *gvc;
 
-#define AGRAPH_T(x) ((agraph_t *)DATAPTR(x))
 #define STR(SE) CHAR(STRING_ELT(SE,0))
 
 SEXP R_scalarReal(double);

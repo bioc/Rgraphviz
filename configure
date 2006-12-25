@@ -1232,7 +1232,6 @@ else
   GRAPHVIZ_DIR=""
 fi;
 
-GVIZ_DEFS="-DGRAPHVIZGT_1_16"
 GRAPHVIZ_VERSTR=""
 
 if test -z "${GRAPHVIZ_DIR}" ; then
@@ -1365,16 +1364,14 @@ echo "$as_me: Found graphviz $GRAPHVIZ_VERSTR" >&6;}
 MAJOR=`echo ${GRAPHVIZ_VERSTR} | cut -f1 -d"."`
 MINOR=`echo ${GRAPHVIZ_VERSTR} | cut -f2 -d"."`
 
-if test ${MAJOR} -lt "2" || test ${MINOR} -lt "2" ; then
+if test ${MAJOR} -lt "2" || (test ${MAJOR} -eq "2" && test ${MINOR} -lt "2") ; then
    { { echo "$as_me:$LINENO: error: \"Need graphviz >= 2.2\"" >&5
 echo "$as_me: error: \"Need graphviz >= 2.2\"" >&2;}
    { (exit 1); exit 1; }; }
    exit 1
 fi
 
-if test ${MAJOR} -eq "2" && test ${MINOR} -gt "3" ; then
-   GVIZ_DEFS="${GVIZ_DEFS} -DGRAPHVIZGT_2_4"
-fi
+GVIZ_DEFS="${GVIZ_DEFS} -DGRAPHVIZ_MAJOR=${MAJOR} -DGRAPHVIZ_MINOR=${MINOR}"
 
 
 

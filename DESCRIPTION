@@ -3,9 +3,9 @@ Title: Provides plotting capabilities for R graph objects
 Description: Interfaces R with the AT&T GraphViz library to provide
         the ability for plotting R graph objects from the graph
         package
-Version: 1.12.1
+Version: 1.12.2
 Author: Jeff Gentry <jgentry@jimmy.harvard.edu>
-Maintainer: Jeff Gentry <jgentry@jimmy.harvard.edu>
+Maintainer: Kasper Daniel Hansen <khansen@stat.berkeley.edu>
 Depends: R (>= 2.1.0), methods, graph, geneplotter (>= 1.11.3)
 Imports: methods, utils
 Suggests: Biobase, fibroEset, hgu95av2
