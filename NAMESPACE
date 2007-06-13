@@ -2,6 +2,7 @@ importFrom("graphics", "plot", "lines")
 importFrom("geneplotter", "imageMap")
 
 import("methods")
+import("utils") # for the "head" generic
                                                                                 
 export(
         agopen,			# Rgraphviz
