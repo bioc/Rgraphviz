@@ -39,11 +39,9 @@ to fail. Rgraphviz will inform you of any version inconsistency when
 loaded. 
 
 The right version of Graphviz for Bioconductor 2.4 is version
-2.22.2. This version will not work with Vista 64 bit, so the user will
-need to compile from source, and in addition make sure that a version
-strictly greater than 2.22 is used - at the time of writing this means
-using a development version of Graphviz (despite the warnings not to
-do so above)..
+2.20.3. This version will not work with Vista 64 bit, so the Vista 64
+bit user will need to compile from source, and in addition make sure
+that a version strictly greater than 2.22.
 
 Here are the steps to INSTALL Graphiz/Rgraphviz if you want to use the
 _binary_ version.
@@ -51,19 +49,19 @@ _binary_ version.
 Using the Windows binary
 ------------------------
 
-o. install Graphviz ***2.22.2*** Windows ***binary*** distribution from
+o. install Graphviz ***2.20.3.1*** Windows ***binary*** distribution from
 
-      http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.22.2.msi
+      http://www.graphviz.org/pub/graphviz/stable/windows/graphviz-2.20.3.1.msi
 
    in a directory that we'll call $DIR.  We use the following as an example:
 
-         C:\Graphviz-2.22
+         C:\Graphviz-2.20.3
    
    If you install it in other dir, just use your dir correspondingly.
 
 o. Add Graphviz' bin diretory to the user PATH variable, e.g.,
 
-     c:\Graphviz-2.22\bin
+     c:\Graphviz-2.20.3\bin
 
 o. Check the configuration by starting a new DOS window and displaying
    the PATH environment variable, e.g.,
@@ -77,7 +75,7 @@ Compiling from source on Windows
 
 If you want to compile Rgraphviz from source you can use any version
 of Graphviz you want (but in general, stay away from development
-versions). Older version so Graphviz (2.2.1 to say 2.16 might not
+versions). Older versions of Graphviz (2.2.1 to say 2.16) might not
 work). 
 
 o. Install Graphviz as outlined in the previous section
