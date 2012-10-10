@@ -2,6 +2,20 @@
 \title{Rgraphviz News}
 \encoding{UTF-8}
 
+\section{Version 2.2.1}{
+  \itemize{
+    \item Plotting now longer accepts border.lwd or border.col.  Instead
+    of border.col use color.  Instead of border.lwd, you need to use the
+    renderGraph/layoutGraph interface.  This fixes a long standing bug
+    where Rgraphviz writes illegal dot files.  unitTest has been added.
+    \item bugfix to renderNodes (used in renderGraph) for nodes with
+    shape = "triangle".  It now works.
+    \item bugfix to renderNodes (used in renderGraph) for using
+    node-specific lwd and shapes either "triangle", "ellipse" or "circle".
+    It now works. 
+  }
+}
+
 \section{Version 2.1.x}{
   \itemize{
     \item Rgraphviz now requires Graphviz >= 2.16.
