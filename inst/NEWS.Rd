@@ -2,6 +2,11 @@
 \title{Rgraphviz News}
 \encoding{UTF-8}
 
+\section{Version 2.4.x}{
+  \itemize{
+    \item Backported the pieGylph fix to the release branch.
+  }
+}
 
 \section{Version 2.3.x}{
   \itemize{
